@@ -3,8 +3,12 @@ from utils.stock_api import Finnhub
 import os
 
 
-def get_news(ticker: str):
-    ticker = ticker.upper()
+def get_news():
+    if not st.session_state.ticker:
+        st.sidebar.warning('Provide ticker info.')
+        return
+
+    ticker = st.session_state.ticker.upper()
     st.markdown(f'# {ticker}')
     market_news = client.get_news(ticker, days=5, max_=10)
     
@@ -19,7 +23,7 @@ def get_news(ticker: str):
         html_link = f'<a href="{url}" target="_blank">{headline}</a>'
         container.markdown(html_link, unsafe_allow_html=True)
         container.caption(summary)
-
+    
 st.set_page_config('Home')
 
 style = """
@@ -34,8 +38,11 @@ style = """
 </style>
 """
 st.markdown(style, unsafe_allow_html=True)
-ticker = st.sidebar.text_input('Enter Ticker', placeholder='Ticker')
-st.sidebar.button('Submit', on_click=get_news, args=(ticker,))
+
+with st.sidebar:
+    form = st.form(key='search', clear_on_submit=True)
+    form.text_input('Enter Ticker', placeholder='Ticker', key='ticker')
+    form.form_submit_button('Submit', on_click=get_news)
 
 api_key = os.environ['FINNHUB_APIKEY']
 client = Finnhub(api_key)
